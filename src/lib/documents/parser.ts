@@ -1,6 +1,8 @@
-// @ts-expect-error - pdf-parse has no ESM default export
-import pdf from 'pdf-parse';
 import mammoth from 'mammoth';
+
+// pdf-parse doesn't have proper ESM support, use dynamic import
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdf = require('pdf-parse');
 import { createClient } from '@/lib/supabase/server';
 
 export interface ParsedDocument {
