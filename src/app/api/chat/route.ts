@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { streamText, convertToModelMessages } from 'ai';
+import { streamText } from 'ai';
 import { createClient } from '@/lib/supabase/server';
 import { getModel, getDefaultProvider, validateProvider, SYSTEM_PROMPT, type AIProvider } from '@/lib/ai/providers';
 import { retrieveRelevantChunks, formatChunksForContext, formatSourceCitations } from '@/lib/ai/rag';
@@ -169,13 +169,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Stream the response
+    // Stream the response (AI SDK v6 accepts simple message arrays directly)
     const result = streamText({
       model,
       system: systemMessage,
-      messages: convertToModelMessages(messages),
+      messages: messages.map(m => ({ role: m.role, content: m.content })),
       temperature: 0.7,
-      maxTokens: 2000,
+      maxOutputTokens: 2000,
       onFinish: async ({ text }) => {
         // Store assistant message after streaming completes
         if (currentConversationId) {
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Return the streaming response with metadata headers
-    const response = result.toDataStreamResponse();
+    const response = result.toTextStreamResponse();
 
     // Add custom headers for client-side use
     response.headers.set('X-Conversation-Id', currentConversationId || '');

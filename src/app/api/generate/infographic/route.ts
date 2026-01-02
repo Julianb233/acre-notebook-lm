@@ -42,13 +42,15 @@ export async function POST(request: NextRequest) {
 
       if (chunks && chunks.length > 0) {
         documentContext = chunks
-          .map(c => `[${(c.documents as { name: string }).name}]: ${c.content}`)
+          .map(c => `[${(c.documents as unknown as { name: string }).name}]: ${c.content}`)
           .join('\n\n');
       }
     }
 
     // Get template configuration
-    const templateConfig = template ? INFOGRAPHIC_TEMPLATES[template] : null;
+    const templateConfig = template && typeof template === 'string' && template in INFOGRAPHIC_TEMPLATES
+      ? INFOGRAPHIC_TEMPLATES[template as keyof typeof INFOGRAPHIC_TEMPLATES]
+      : null;
 
     // Generate infographic content with AI
     const systemPrompt = `You are an expert data visualization designer. Create infographic content based on the user's request and any provided document context.
@@ -80,7 +82,7 @@ Ensure all numerical values are realistic and based on the provided context when
 
     const userPrompt = generateInfographicPrompt(
       prompt,
-      documentContext || undefined
+      documentContext || ''
     );
 
     const { text } = await generateText({
@@ -110,7 +112,7 @@ Ensure all numerical values are realistic and based on the provided context when
       title: infographicData.title || 'Untitled Infographic',
       subtitle: infographicData.subtitle,
       sections: infographicData.sections || [],
-      colors: templateConfig?.colors || {
+      colors: {
         primary: '#3B82F6',
         secondary: '#10B981',
         accent: '#F59E0B',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -30,7 +30,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Download, Sparkles, Plus, Trash2 } from 'lucide-react';
-import type { InfographicConfig } from '@/types';
+import type { InfographicConfig, InfographicSection, InfographicDataPoint, InfographicColors } from '@/types';
 import {
   INFOGRAPHIC_TEMPLATES,
   validateInfographicConfig,
@@ -47,6 +47,13 @@ export function InfographicBuilder({ partnerId, onGenerate }: InfographicBuilder
     title: '',
     subtitle: '',
     sections: [],
+    colors: {
+      primary: '#2563eb',
+      secondary: '#1e40af',
+      accent: '#06b6d4',
+      background: '#ffffff',
+      text: '#1f2937',
+    },
     branding: {
       primary_color: '#2563eb',
       secondary_color: '#1e40af',
@@ -64,11 +71,12 @@ export function InfographicBuilder({ partnerId, onGenerate }: InfographicBuilder
     if (template) {
       setConfig((prev) => ({
         ...prev,
-        sections: template.sections.map((s) => ({
-          heading: s.heading,
-          data: [],
-          chart_type: s.chart_type,
-        })),
+        sections: template.sections.map((s, index) => ({
+          id: `section-${index}`,
+          title: s.heading,
+          type: s.chart_type,
+          data: [] as InfographicDataPoint[],
+        } as InfographicSection)),
       }));
     }
   };
@@ -144,7 +152,12 @@ export function InfographicBuilder({ partnerId, onGenerate }: InfographicBuilder
       ...prev,
       sections: [
         ...(prev.sections || []),
-        { heading: '', data: [], chart_type: 'bar' as const },
+        {
+          id: `section-${(prev.sections || []).length}`,
+          title: '',
+          type: 'bar' as const,
+          data: [] as InfographicDataPoint[],
+        } as InfographicSection,
       ],
     }));
   };
@@ -174,7 +187,7 @@ export function InfographicBuilder({ partnerId, onGenerate }: InfographicBuilder
       ...prev,
       sections: prev.sections?.map((s, i) =>
         i === sectionIndex
-          ? { ...s, data: [...s.data, { label: '', value: 0 }] }
+          ? { ...s, data: [...s.data, { label: '', value: 0 } as InfographicDataPoint] }
           : s
       ),
     }));
@@ -221,7 +234,7 @@ export function InfographicBuilder({ partnerId, onGenerate }: InfographicBuilder
       value: typeof d.value === 'number' ? d.value : parseFloat(String(d.value)) || 0,
     }));
 
-    switch (section.chart_type) {
+    switch (section.type) {
       case 'pie':
         return (
           <ResponsiveContainer width="100%" height={200}>
@@ -473,16 +486,16 @@ export function InfographicBuilder({ partnerId, onGenerate }: InfographicBuilder
 
                 <Input
                   placeholder="Section heading"
-                  value={section.heading}
+                  value={section.title}
                   onChange={(e) =>
-                    updateSection(sectionIndex, 'heading', e.target.value)
+                    updateSection(sectionIndex, 'title', e.target.value)
                   }
                 />
 
                 <Select
-                  value={section.chart_type || 'bar'}
+                  value={section.type || 'bar'}
                   onValueChange={(value) =>
-                    updateSection(sectionIndex, 'chart_type', value)
+                    updateSection(sectionIndex, 'type', value)
                   }
                 >
                   <SelectTrigger>
@@ -604,7 +617,7 @@ export function InfographicBuilder({ partnerId, onGenerate }: InfographicBuilder
                   className="text-lg font-semibold mb-4"
                   style={{ color: config.branding?.primary_color }}
                 >
-                  {section.heading || `Section ${index + 1}`}
+                  {section.title || `Section ${index + 1}`}
                 </h3>
                 {section.data.length > 0 ? (
                   renderChart(section, gradientColors)

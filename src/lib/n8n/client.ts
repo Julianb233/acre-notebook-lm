@@ -67,7 +67,7 @@ export class N8nClient {
 
         return {
           success: true,
-          executionId: response.executionId
+          executionId: response.executionId as string | undefined
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));

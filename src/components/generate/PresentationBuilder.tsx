@@ -56,6 +56,13 @@ export function PresentationBuilder({ partnerId, onGenerate }: PresentationBuild
       primary_color: '#2563eb',
       secondary_color: '#1e40af',
     },
+    theme: {
+      primaryColor: '#2563eb',
+      secondaryColor: '#1e40af',
+      backgroundColor: '#ffffff',
+      textColor: '#000000',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+    },
   });
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [aiPrompt, setAiPrompt] = useState('');
@@ -70,9 +77,9 @@ export function PresentationBuilder({ partnerId, onGenerate }: PresentationBuild
     if (template) {
       setConfig((prev) => ({
         ...prev,
-        slides: template.slides.map((s) => ({
+        slides: template.slides.map((s, index) => ({
+          id: `slide-${index}`,
           title: s.title,
-          content: [],
           layout: s.layout,
         })),
       }));
@@ -101,8 +108,19 @@ export function PresentationBuilder({ partnerId, onGenerate }: PresentationBuild
         throw new Error('Failed to generate presentation');
       }
 
-      const data = await response.json();
-      setConfig(data.config);
+      const data = await response.json() as Partial<PresentationConfig>;
+      // Ensure theme is set if not provided by API
+      const updatedConfig: Partial<PresentationConfig> = {
+        ...data,
+        theme: data.theme || {
+          primaryColor: '#2563eb',
+          secondaryColor: '#1e40af',
+          backgroundColor: '#ffffff',
+          textColor: '#000000',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+        },
+      };
+      setConfig(updatedConfig);
       setCurrentSlide(0);
     } catch (error) {
       setErrors(['Failed to generate presentation. Please try again.']);
@@ -121,10 +139,29 @@ export function PresentationBuilder({ partnerId, onGenerate }: PresentationBuild
     setIsExporting(true);
 
     try {
+      // Ensure config has all required properties before export
+      const completeConfig: PresentationConfig = {
+        title: config.title || '',
+        slides: config.slides || [],
+        theme: config.theme || {
+          primaryColor: '#2563eb',
+          secondaryColor: '#1e40af',
+          backgroundColor: '#ffffff',
+          textColor: '#000000',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+        },
+        subtitle: config.subtitle,
+        author: config.author,
+        branding: config.branding || {
+          primary_color: '#2563eb',
+          secondary_color: '#1e40af',
+        },
+      };
+
       const response = await fetch('/api/generate/presentation/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config, partnerId }),
+        body: JSON.stringify({ config: completeConfig, partnerId }),
       });
 
       if (!response.ok) {
@@ -135,11 +172,11 @@ export function PresentationBuilder({ partnerId, onGenerate }: PresentationBuild
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${config.title || 'presentation'}.pptx`;
+      a.download = `${completeConfig.title || 'presentation'}.pptx`;
       a.click();
       URL.revokeObjectURL(url);
 
-      onGenerate?.(config as PresentationConfig);
+      onGenerate?.(completeConfig);
     } catch (error) {
       setErrors(['Failed to export presentation. Please try again.']);
     } finally {
@@ -148,14 +185,21 @@ export function PresentationBuilder({ partnerId, onGenerate }: PresentationBuild
   };
 
   const addSlide = () => {
-    setConfig((prev) => ({
-      ...prev,
-      slides: [
+    setConfig((prev) => {
+      const newSlides = [
         ...(prev.slides || []),
-        { title: '', content: [], layout: 'content' as const },
-      ],
-    }));
-    setCurrentSlide((prev.slides?.length || 0));
+        {
+          id: `slide-${(prev.slides || []).length}`,
+          title: '',
+          layout: 'content' as const,
+        },
+      ];
+      setCurrentSlide(newSlides.length - 1);
+      return {
+        ...prev,
+        slides: newSlides,
+      };
+    });
   };
 
   const removeSlide = (index: number) => {

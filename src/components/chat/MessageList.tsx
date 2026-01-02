@@ -71,9 +71,9 @@ function ConfidenceIndicator({ confidence }: { confidence: ConfidenceScore }) {
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
           <p className="text-sm">{confidence.explanation}</p>
-          {confidence.sources_count !== undefined && (
+          {confidence.supporting_sources !== undefined && (
             <p className="text-xs text-muted-foreground mt-1">
-              Based on {confidence.sources_count} source{confidence.sources_count !== 1 ? 's' : ''}
+              Based on {confidence.supporting_sources} source{confidence.supporting_sources !== 1 ? 's' : ''}
             </p>
           )}
         </TooltipContent>

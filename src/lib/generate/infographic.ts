@@ -85,8 +85,8 @@ export function validateInfographicConfig(config: Partial<InfographicConfig>): {
   }
 
   config.sections?.forEach((section, index) => {
-    if (!section.heading) {
-      errors.push(`Section ${index + 1} is missing a heading`);
+    if (!section.title) {
+      errors.push(`Section ${index + 1} is missing a title`);
     }
     if (!section.data || section.data.length === 0) {
       errors.push(`Section ${index + 1} has no data`);

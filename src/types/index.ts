@@ -1,3 +1,6 @@
+// AI Provider types
+export type AIProvider = 'openai' | 'anthropic' | 'google';
+
 // Partner/Client types
 export interface Partner {
   id: string;
@@ -243,7 +246,10 @@ export interface InfographicColors {
 
 export interface InfographicBranding {
   logo?: string;
+  logo_url?: string;
   companyName?: string;
+  primary_color?: string;
+  secondary_color?: string;
 }
 
 export interface InfographicConfig {
@@ -261,10 +267,12 @@ export interface Slide {
   layout: 'title' | 'content' | 'two-column' | 'image';
   title: string;
   subtitle?: string;
+  content?: string[];
   bullets?: string[];
   leftContent?: string[];
   rightContent?: string[];
   imageUrl?: string;
+  image_url?: string;
   notes?: string;
 }
 
@@ -278,7 +286,10 @@ export interface PresentationTheme {
 
 export interface PresentationBranding {
   logo?: string;
+  logo_url?: string;
   companyName?: string;
+  primary_color: string;
+  secondary_color: string;
 }
 
 export interface PresentationConfig {
@@ -318,7 +329,10 @@ export interface ReportStyling {
 
 export interface ReportBranding {
   logo?: string;
+  logo_url?: string;
   companyName?: string;
+  primary_color?: string;
+  secondary_color?: string;
 }
 
 export interface ReportConfig {

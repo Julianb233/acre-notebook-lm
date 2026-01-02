@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ['canvas', '@napi-rs/canvas', 'pdf-parse', '@react-pdf/renderer'],
+  turbopack: {},
 };
 
 export default nextConfig;

@@ -69,13 +69,15 @@ export async function POST(request: NextRequest) {
 
       if (chunks && chunks.length > 0) {
         documentContext = chunks
-          .map(c => `[${(c.documents as { name: string }).name}]: ${c.content}`)
+          .map(c => `[${(c.documents as unknown as { name: string }).name}]: ${c.content}`)
           .join('\n\n');
       }
     }
 
     // Get template configuration
-    const templateConfig = template ? PRESENTATION_TEMPLATES[template] : null;
+    const templateConfig = template && typeof template === 'string' && template in PRESENTATION_TEMPLATES
+      ? PRESENTATION_TEMPLATES[template as keyof typeof PRESENTATION_TEMPLATES]
+      : null;
 
     // Generate presentation content with AI
     const systemPrompt = `You are an expert presentation designer. Create a professional slide deck based on the user's request.
@@ -114,8 +116,8 @@ Create exactly ${slideCount} slides with logical flow and clear messaging.`;
 
     const userPrompt = generatePresentationPrompt(
       prompt,
-      slideCount,
-      documentContext || undefined
+      documentContext || '',
+      template as keyof typeof PRESENTATION_TEMPLATES | undefined
     );
 
     const { text } = await generateText({
@@ -143,7 +145,7 @@ Create exactly ${slideCount} slides with logical flow and clear messaging.`;
     const config: PresentationConfig = {
       title: presentationData.title || 'Untitled Presentation',
       slides: presentationData.slides || [],
-      theme: templateConfig?.theme || {
+      theme: {
         primaryColor: '#3B82F6',
         secondaryColor: '#1E40AF',
         backgroundColor: '#FFFFFF',
@@ -152,7 +154,9 @@ Create exactly ${slideCount} slides with logical flow and clear messaging.`;
       },
       branding: {
         logo: '/acre-logo.svg',
-        companyName: 'ACRE Partners'
+        companyName: 'ACRE Partners',
+        primary_color: '#3B82F6',
+        secondary_color: '#1E40AF'
       }
     };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   FileText,
@@ -48,7 +48,7 @@ type ViewMode = 'grid' | 'list';
 type FilterType = 'all' | 'pdf' | 'docx' | 'txt' | 'md';
 type FilterStatus = 'all' | 'ready' | 'processing' | 'error';
 
-export default function DocumentsPage() {
+function DocumentsPageContent() {
   const searchParams = useSearchParams();
   const showUploadParam = searchParams.get('upload') === 'true';
 
@@ -443,5 +443,13 @@ export default function DocumentsPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function DocumentsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="text-gray-500">Loading...</div></div>}>
+      <DocumentsPageContent />
+    </Suspense>
   );
 }

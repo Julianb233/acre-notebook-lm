@@ -67,7 +67,8 @@ export function ReportBuilder({ partnerId, onGenerate }: ReportBuilderProps) {
     if (template) {
       setConfig((prev) => ({
         ...prev,
-        sections: template.sections.map((s) => ({
+        sections: template.sections.map((s, index) => ({
+          id: `section-${index}`,
           title: s.title,
           content: '',
           subsections: [],
@@ -161,7 +162,12 @@ export function ReportBuilder({ partnerId, onGenerate }: ReportBuilderProps) {
       ...prev,
       sections: [
         ...(prev.sections || []),
-        { title: '', content: '', subsections: [] },
+        {
+          id: `section-${(prev.sections || []).length}`,
+          title: '',
+          content: '',
+          subsections: [],
+        },
       ],
     }));
     setExpandedSections((prev) => new Set([...prev, config.sections?.length || 0]));
@@ -195,7 +201,14 @@ export function ReportBuilder({ partnerId, onGenerate }: ReportBuilderProps) {
         i === sectionIndex
           ? {
               ...s,
-              subsections: [...(s.subsections || []), { title: '', content: '' }],
+              subsections: [
+                ...(s.subsections || []),
+                {
+                  id: `subsection-${Date.now()}-${Math.random()}`,
+                  title: '',
+                  content: '',
+                },
+              ],
             }
           : s
       ),
@@ -240,7 +253,14 @@ export function ReportBuilder({ partnerId, onGenerate }: ReportBuilderProps) {
   const addAppendix = () => {
     setConfig((prev) => ({
       ...prev,
-      appendices: [...(prev.appendices || []), { title: '', content: '' }],
+      appendices: [
+        ...(prev.appendices || []),
+        {
+          id: `appendix-${Date.now()}-${Math.random()}`,
+          title: '',
+          content: '',
+        },
+      ],
     }));
   };
 

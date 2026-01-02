@@ -63,13 +63,13 @@ export async function POST(request: NextRequest) {
 
       if (chunks && chunks.length > 0) {
         documentContext = chunks
-          .map(c => `[${(c.documents as { name: string }).name}]: ${c.content}`)
+          .map(c => `[${(c.documents as unknown as { name: string }).name}]: ${c.content}`)
           .join('\n\n');
 
         // Get unique source documents
         const uniqueDocs = new Map();
         chunks.forEach(c => {
-          const doc = c.documents as { id: string; name: string };
+          const doc = c.documents as unknown as { id: string; name: string };
           if (!uniqueDocs.has(doc.id)) {
             uniqueDocs.set(doc.id, doc);
           }
@@ -79,7 +79,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get template configuration
-    const templateConfig = template ? REPORT_TEMPLATES[template] : null;
+    const templateConfig = template && typeof template === 'string' && template in REPORT_TEMPLATES
+      ? REPORT_TEMPLATES[template as keyof typeof REPORT_TEMPLATES]
+      : null;
 
     // Generate report content with AI
     const systemPrompt = `You are an expert report writer. Create a comprehensive, professional report based on the user's request.
@@ -126,7 +128,7 @@ Create a well-structured report with:
 
     const userPrompt = generateReportPrompt(
       prompt,
-      documentContext || undefined
+      documentContext || ''
     );
 
     const { text } = await generateText({
@@ -134,7 +136,7 @@ Create a well-structured report with:
       system: systemPrompt,
       prompt: userPrompt,
       temperature: 0.7,
-      maxTokens: 4000, // Reports need more tokens
+      maxOutputTokens: 4000, // Reports need more tokens
     });
 
     // Parse AI response
@@ -161,7 +163,7 @@ Create a well-structured report with:
       sections: reportData.sections || [],
       appendices: reportData.appendices || [],
       references: reportData.references || [],
-      styling: templateConfig?.styling || {
+      styling: {
         fontFamily: 'Inter',
         primaryColor: '#1E40AF',
         headerStyle: 'modern'
@@ -173,7 +175,7 @@ Create a well-structured report with:
     };
 
     // Generate table of contents
-    const tableOfContents = generateTableOfContents(config.sections, config.appendices);
+    const tableOfContents = generateTableOfContents(config);
 
     // Validate config
     const validation = validateReportConfig(config);

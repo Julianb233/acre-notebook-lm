@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
           const syncedIds = new Set(
             (result.local_meetings as { fireflies_id: string }[]).map(m => m.fireflies_id)
           );
-          result.fireflies_meetings = result.fireflies_meetings.map((m: { fireflies_id: string; synced: boolean }) => ({
+          result.fireflies_meetings = (result.fireflies_meetings as { fireflies_id: string; synced: boolean }[]).map((m) => ({
             ...m,
             synced: syncedIds.has(m.fireflies_id)
           }));

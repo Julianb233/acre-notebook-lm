@@ -97,6 +97,9 @@ export async function generatePPTX(config: PresentationConfig): Promise<Blob> {
   pptx.company = 'ACRE';
 
   // Define master slide with branding
+  const primaryColor = config.branding?.primary_color || config.theme.primaryColor;
+  const secondaryColor = config.branding?.secondary_color || config.theme.secondaryColor;
+
   pptx.defineSlideMaster({
     title: 'BRANDED_SLIDE',
     background: { color: 'FFFFFF' },
@@ -108,7 +111,7 @@ export async function generatePPTX(config: PresentationConfig): Promise<Blob> {
           y: 0,
           w: '100%',
           h: 0.5,
-          fill: { color: config.branding.primary_color.replace('#', '') },
+          fill: { color: primaryColor.replace('#', '') },
         },
       },
       // Footer line
@@ -118,7 +121,7 @@ export async function generatePPTX(config: PresentationConfig): Promise<Blob> {
           y: 5.25,
           w: '100%',
           h: 0.05,
-          fill: { color: config.branding.secondary_color.replace('#', '') },
+          fill: { color: secondaryColor.replace('#', '') },
         },
       },
     ],
@@ -128,18 +131,25 @@ export async function generatePPTX(config: PresentationConfig): Promise<Blob> {
   config.slides.forEach((slideConfig, index) => {
     const slide = pptx.addSlide({ masterName: index === 0 ? undefined : 'BRANDED_SLIDE' });
 
+    // Provide branding with theme fallbacks
+    const brandingWithDefaults = {
+      primary_color: config.branding?.primary_color || config.theme.primaryColor,
+      secondary_color: config.branding?.secondary_color || config.theme.secondaryColor,
+      logo_url: config.branding?.logo_url,
+    };
+
     switch (slideConfig.layout) {
       case 'title':
-        generateTitleSlide(slide, slideConfig, config.branding);
+        generateTitleSlide(slide, slideConfig, brandingWithDefaults);
         break;
       case 'content':
-        generateContentSlide(slide, slideConfig, config.branding);
+        generateContentSlide(slide, slideConfig, brandingWithDefaults);
         break;
       case 'two-column':
-        generateTwoColumnSlide(slide, slideConfig, config.branding);
+        generateTwoColumnSlide(slide, slideConfig, brandingWithDefaults);
         break;
       case 'image':
-        generateImageSlide(slide, slideConfig, config.branding);
+        generateImageSlide(slide, slideConfig, brandingWithDefaults);
         break;
     }
   });
@@ -152,7 +162,7 @@ export async function generatePPTX(config: PresentationConfig): Promise<Blob> {
 function generateTitleSlide(
   slide: pptxgen.Slide,
   config: PresentationConfig['slides'][0],
-  branding: PresentationConfig['branding']
+  branding: { primary_color: string; secondary_color: string; logo_url?: string }
 ) {
   // Background gradient effect
   slide.addShape('rect', {
@@ -203,7 +213,7 @@ function generateTitleSlide(
 function generateContentSlide(
   slide: pptxgen.Slide,
   config: PresentationConfig['slides'][0],
-  branding: PresentationConfig['branding']
+  branding: { primary_color: string; secondary_color: string }
 ) {
   // Slide title
   slide.addText(config.title, {
@@ -236,7 +246,7 @@ function generateContentSlide(
 function generateTwoColumnSlide(
   slide: pptxgen.Slide,
   config: PresentationConfig['slides'][0],
-  branding: PresentationConfig['branding']
+  branding: { primary_color: string; secondary_color: string }
 ) {
   // Slide title
   slide.addText(config.title, {
@@ -290,7 +300,7 @@ function generateTwoColumnSlide(
 function generateImageSlide(
   slide: pptxgen.Slide,
   config: PresentationConfig['slides'][0],
-  branding: PresentationConfig['branding']
+  branding: { primary_color: string; secondary_color: string }
 ) {
   // Slide title
   slide.addText(config.title, {

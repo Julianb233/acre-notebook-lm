@@ -96,7 +96,8 @@ export async function syncTable(
         let embedding: number[] | undefined;
         if (options.embedRecords) {
           const text = recordToText(record, table.name);
-          embedding = await generateEmbedding(text);
+          const embeddingResult = await generateEmbedding(text);
+          embedding = embeddingResult.embedding;
         }
 
         const recordData: SyncedRecord = {

@@ -346,9 +346,9 @@ export function prepareReportForPDF(config: ReportConfig): PDFReportData {
     author: config.author,
     date: formatReportDate(config.date),
     branding: {
-      primaryColor: config.branding.primary_color,
-      secondaryColor: config.branding.secondary_color,
-      logoUrl: config.branding.logo_url,
+      primaryColor: config.branding?.primary_color || config.styling?.primaryColor || '#1E40AF',
+      secondaryColor: config.branding?.secondary_color || '#1E40AF',
+      logoUrl: config.branding?.logo_url,
     },
     tableOfContents: generateTableOfContents(config),
     sections: config.sections.map((section) => ({

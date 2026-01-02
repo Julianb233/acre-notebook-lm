@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { Settings, FileText, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,63 +56,68 @@ export function ChatInterface({
 
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
+    status,
     error,
     stop,
     setMessages,
-    append,
+    sendMessage,
   } = useChat({
-    api: '/api/chat',
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      prepareSendMessagesRequest({ messages }) {
+        return {
+          body: {
+            messages,
+            conversationId,
+            partnerId,
+            documentIds,
+            provider,
+            useRAG,
+          },
+        };
+      },
+    }),
     id: conversationId,
-    initialMessages: initialMessages.map((m) => ({
-      id: m.id,
-      role: m.role,
-      content: m.content,
-    })),
-    body: {
-      conversationId,
-      partnerId,
-      documentIds,
-      provider,
-      useRAG,
-    },
-    onResponse: async (response) => {
-      // Extract conversation ID from response headers
-      const newConversationId = response.headers.get('X-Conversation-Id');
-      if (newConversationId && !conversationId) {
-        setConversationId(newConversationId);
-        onConversationCreated?.(newConversationId);
-      }
-
-      // Extract source citations from headers
-      const sourcesBase64 = response.headers.get('X-Sources');
-      if (sourcesBase64) {
-        try {
-          const sourcesJson = atob(sourcesBase64);
-          const sources: SourceCitation[] = JSON.parse(sourcesJson);
-          setSourceCitations(sources);
-        } catch (e) {
-          console.error('Failed to parse sources:', e);
-        }
-      } else {
-        setSourceCitations([]);
-      }
-    },
-    onError: (error) => {
-      console.error('Chat error:', error);
-    },
   });
+
+  // Load initial messages on mount
+  useEffect(() => {
+    if (initialMessages.length > 0 && messages.length === 0) {
+      setMessages(initialMessages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        parts: [{ type: 'text' as const, text: m.content }],
+      })));
+    }
+  }, [initialMessages, messages.length, setMessages]);
+
+  // Extract metadata from responses
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && lastMessage.id !== lastResponseIdRef.current) {
+      lastResponseIdRef.current = lastMessage.id;
+
+      // Store conversation ID if created
+      if (!conversationId && lastMessage.id) {
+        const newConvId = lastMessage.id.split('-')[0];
+        if (newConvId && newConvId !== lastMessage.id) {
+          setConversationId(newConvId);
+          onConversationCreated?.(newConvId);
+        }
+      }
+    }
+  }, [messages, conversationId, onConversationCreated]);
+
+  // Check if currently loading (streaming or submitted)
+  const isLoading = status === 'streaming' || status === 'submitted';
 
   // Send message handler for ChatInput
   const handleSend = useCallback((content: string) => {
-    append({
+    sendMessage({
       role: 'user',
-      content,
+      parts: [{ type: 'text' as const, text: content }],
     });
-  }, [append]);
+  }, [sendMessage]);
 
   // Map messages to include sources for the last assistant message
   const messagesWithSources = messages.map((message, index) => {
@@ -119,10 +125,16 @@ export function ChatInterface({
       message.role === 'assistant' &&
       index === messages.length - 1;
 
+    // Extract text content from parts
+    const content = message.parts
+      ?.filter((part: any) => part.type === 'text')
+      .map((part: any) => part.text)
+      .join('') || '';
+
     return {
       id: message.id,
       role: message.role as 'user' | 'assistant' | 'system',
-      content: message.content,
+      content,
       sources: isLastAssistant ? sourceCitations : undefined,
       isStreaming: isLastAssistant && isLoading,
     };
