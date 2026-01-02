@@ -1,12 +1,19 @@
 import { NextRequest } from 'next/server';
-import { streamText, convertToModelMessages, type Message as AIMessage } from 'ai';
+import { streamText, convertToModelMessages } from 'ai';
 import { createClient } from '@/lib/supabase/server';
 import { getModel, getDefaultProvider, validateProvider, SYSTEM_PROMPT, type AIProvider } from '@/lib/ai/providers';
 import { retrieveRelevantChunks, formatChunksForContext, formatSourceCitations } from '@/lib/ai/rag';
 import type { SourceCitation } from '@/types';
 
+// Simple message interface for API request body
+interface ChatMessage {
+  id?: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 interface ChatRequestBody {
-  messages: AIMessage[];
+  messages: ChatMessage[];
   conversationId?: string;
   partnerId?: string;
   documentIds?: string[];

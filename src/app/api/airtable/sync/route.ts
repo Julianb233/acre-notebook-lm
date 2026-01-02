@@ -97,8 +97,9 @@ async function fetchAllTableRecords(
   return allRecords;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function syncTableToSupabase(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   table: AirtableTable,
   records: AirtableRecord[],
   baseId: string
@@ -118,7 +119,6 @@ async function syncTableToSupabase(
         synced_at: new Date().toISOString(),
       };
 
-      // Upsert record
       const { error } = await supabase
         .from('airtable_records')
         .upsert(recordData, {
@@ -208,8 +208,9 @@ export async function POST(request: NextRequest) {
     // Check overall success
     result.success = result.tables.some(t => t.status === 'success');
 
-    // Update sync status
-    await supabase
+    // Update sync status (type assertion needed for untyped Supabase client)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
       .from('data_source_status')
       .upsert({
         source: 'airtable',
