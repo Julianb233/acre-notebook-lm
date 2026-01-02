@@ -35,7 +35,7 @@ import {
 } from '@/lib/generate/presentation';
 
 interface PresentationBuilderProps {
-  partnerId: string;
+  partnerId?: string;
   onGenerate?: (config: PresentationConfig) => void;
 }
 

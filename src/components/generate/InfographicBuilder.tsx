@@ -38,7 +38,7 @@ import {
 } from '@/lib/generate/infographic';
 
 interface InfographicBuilderProps {
-  partnerId: string;
+  partnerId?: string;
   onGenerate?: (config: InfographicConfig) => void;
 }
 

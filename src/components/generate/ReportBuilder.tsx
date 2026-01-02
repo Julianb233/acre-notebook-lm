@@ -37,7 +37,7 @@ import {
 } from '@/lib/generate/report';
 
 interface ReportBuilderProps {
-  partnerId: string;
+  partnerId?: string;
   onGenerate?: (config: ReportConfig) => void;
 }
 
