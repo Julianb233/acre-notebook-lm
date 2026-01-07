@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
-import { Settings, FileText, Sparkles } from 'lucide-react';
+import { DefaultChatTransport, type UIMessage as Message } from 'ai';
+import { Settings, FileText, Sparkles, Headphones, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -23,9 +23,11 @@ import {
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageList } from './MessageList';
 import { ChatInput } from './ChatInput';
 import { SourceCitationsList } from './SourceCitation';
+import { AudioOverview } from './AudioOverview';
 import type { SourceCitation, AIProvider } from '@/types';
 
 interface ChatInterfaceProps {
@@ -40,6 +42,13 @@ interface ChatInterfaceProps {
   onConversationCreated?: (conversationId: string) => void;
 }
 
+const SUGGESTED_QUESTIONS = [
+  "Summarize the key points",
+  "What are the main risks?",
+  "Create a briefing doc",
+  "Compare Q3 vs Q4"
+];
+
 export function ChatInterface({
   conversationId: initialConversationId,
   partnerId,
@@ -52,6 +61,7 @@ export function ChatInterface({
   const [useRAG, setUseRAG] = useState(true);
   const [sourceCitations, setSourceCitations] = useState<SourceCitation[]>([]);
   const [showSettings, setShowSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState("chat");
   const lastResponseIdRef = useRef<string | null>(null);
 
   const {
@@ -60,25 +70,18 @@ export function ChatInterface({
     error,
     stop,
     setMessages,
-    sendMessage,
+    append,
   } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-      prepareSendMessagesRequest({ messages }) {
-        return {
-          body: {
-            messages,
-            conversationId,
-            partnerId,
-            documentIds,
-            provider,
-            useRAG,
-          },
-        };
-      },
-    }),
+    api: '/api/chat',
+    body: {
+      conversationId,
+      partnerId,
+      documentIds,
+      provider,
+      useRAG,
+    },
     id: conversationId,
-  });
+  } as any) as any;
 
   // Load initial messages on mount
   useEffect(() => {
@@ -86,7 +89,7 @@ export function ChatInterface({
       setMessages(initialMessages.map((m) => ({
         id: m.id,
         role: m.role,
-        parts: [{ type: 'text' as const, text: m.content }],
+        content: m.content,
       })));
     }
   }, [initialMessages, messages.length, setMessages]);
@@ -113,23 +116,35 @@ export function ChatInterface({
 
   // Send message handler for ChatInput
   const handleSend = useCallback((content: string) => {
-    sendMessage({
+    append({
       role: 'user',
-      parts: [{ type: 'text' as const, text: content }],
+      content: content,
     });
-  }, [sendMessage]);
+  }, [append]);
+
+  const handleSuggestionClick = (question: string) => {
+    append({
+      role: 'user',
+      content: question,
+    });
+  };
 
   // Map messages to include sources for the last assistant message
-  const messagesWithSources = messages.map((message, index) => {
+  const messagesWithSources = (messages as any[]).map((message: any, index) => {
     const isLastAssistant =
       message.role === 'assistant' &&
       index === messages.length - 1;
 
-    // Extract text content from parts
-    const content = message.parts
-      ?.filter((part: any) => part.type === 'text')
-      .map((part: any) => part.text)
-      .join('') || '';
+    // Extract text content
+    let content = message.content || '';
+
+    // Fallback to parts if content is empty (e.g. multimodal)
+    if (!content && message.parts) {
+      content = message.parts
+        .filter((part: any) => part.type === 'text')
+        .map((part: any) => part.text)
+        .join('');
+    }
 
     return {
       id: message.id,
@@ -144,27 +159,33 @@ export function ChatInterface({
     <div className="flex flex-col h-full bg-[#f8f9fa]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b">
+        {/* Title & Badge */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h2 className="font-semibold text-gray-900">AI Assistant</h2>
+            <h2 className="font-semibold text-gray-900">Notebook Guide</h2>
             <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Badge variant="outline" className="text-xs capitalize">
-                {provider}
-              </Badge>
-              {useRAG && (
-                <Badge variant="secondary" className="text-xs">
-                  <FileText className="h-3 w-3 mr-1" />
-                  RAG enabled
-                </Badge>
-              )}
               {documentIds && documentIds.length > 0 && (
-                <span>{documentIds.length} doc(s) selected</span>
+                <span>{documentIds.length} source(s)</span>
               )}
             </div>
           </div>
+        </div>
+
+        {/* Mode Toggles */}
+        <div className="flex-1 flex justify-center">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-gray-100 p-1 rounded-full">
+            <TabsList className="bg-transparent h-8 p-0">
+              <TabsTrigger value="chat" className="rounded-full px-4 h-full data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs font-medium">
+                <MessageSquare className="h-3 w-3 mr-2" /> Chat
+              </TabsTrigger>
+              <TabsTrigger value="audio" className="rounded-full px-4 h-full data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs font-medium">
+                <Headphones className="h-3 w-3 mr-2" /> Audio
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         <Sheet open={showSettings} onOpenChange={setShowSettings}>
@@ -232,41 +253,68 @@ export function ChatInterface({
         </Sheet>
       </div>
 
-      {/* Messages */}
-      <MessageList
-        messages={messagesWithSources}
-        isLoading={isLoading}
-      />
+      {
+        activeTab === 'chat' ? (
+          <>
+            {/* Messages */}
+            <MessageList
+              messages={messagesWithSources}
+              isLoading={isLoading}
+            />
 
-      {/* Error display */}
-      {error && (
-        <div className="px-4 py-2 bg-red-50 border-t border-red-100">
-          <p className="text-sm text-red-600 text-center">
-            {error.message || 'An error occurred. Please try again.'}
-          </p>
-        </div>
-      )}
+            {/* Error display */}
+            {error && (
+              <div className="px-4 py-2 bg-red-50 border-t border-red-100">
+                <p className="text-sm text-red-600 text-center">
+                  {error.message || 'An error occurred. Please try again.'}
+                </p>
+              </div>
+            )}
 
-      {/* Expanded source citations when not streaming */}
-      {!isLoading && sourceCitations.length > 0 && messages.length > 0 && (
-        <div className="px-4 py-3 bg-white border-t">
-          <div className="max-w-3xl mx-auto">
-            <SourceCitationsList citations={sourceCitations} />
+            {/* Expanded source citations when not streaming */}
+            {!isLoading && sourceCitations.length > 0 && messages.length > 0 && (
+              <div className="px-4 py-3 bg-white border-t">
+                <div className="max-w-3xl mx-auto">
+                  <SourceCitationsList citations={sourceCitations} />
+                </div>
+              </div>
+            )}
+
+            {/* Input Area */}
+            <div className="bg-white border-t p-4 pb-6">
+              {/* Suggestion Chips */}
+              {messages.length === 0 && (
+                <div className="flex gap-2 overflow-x-auto pb-3 max-w-3xl mx-auto scrollbar-hide">
+                  {SUGGESTED_QUESTIONS.map((q, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSuggestionClick(q)}
+                      className="whitespace-nowrap px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-medium border border-blue-100 hover:bg-blue-100 transition-colors"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <ChatInput
+                onSend={handleSend}
+                isLoading={isLoading}
+                onStop={stop}
+                placeholder={
+                  documentIds && documentIds.length > 0
+                    ? 'Ask about your selected documents...'
+                    : 'Ask a question about your documents...'
+                }
+              />
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 bg-white">
+            <AudioOverview />
           </div>
-        </div>
-      )}
-
-      {/* Input */}
-      <ChatInput
-        onSend={handleSend}
-        isLoading={isLoading}
-        onStop={stop}
-        placeholder={
-          documentIds && documentIds.length > 0
-            ? 'Ask about your selected documents...'
-            : 'Ask a question about your documents...'
-        }
-      />
-    </div>
+        )
+      }
+    </div >
   );
 }

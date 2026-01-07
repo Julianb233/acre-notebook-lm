@@ -198,7 +198,7 @@ export function MessageList({ messages, isLoading = false }: MessageListProps) {
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             Start a conversation
           </h3>
-          <p className="text-gray-500">I'm your AI assistant. Ask me anything about your documents, agreements, or data. I'll provide
+          <p className="text-gray-500">I&apos;m your AI assistant. Ask me anything about your documents, agreements, or data. I&apos;ll provide
             answers with source citations so you know where the information comes from.</p>
         </div>
       </div>

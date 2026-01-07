@@ -120,7 +120,8 @@ async function syncTableToSupabase(
       let embedding: number[] | null = null;
       try {
         if (content.trim()) {
-          embedding = await generateEmbedding(content);
+          const result = await generateEmbedding(content);
+          embedding = result.embedding;
         }
       } catch (embError) {
         console.warn(`Failed to generate embedding for record ${record.id}:`, embError);

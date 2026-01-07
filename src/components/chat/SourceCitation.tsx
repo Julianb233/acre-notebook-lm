@@ -60,7 +60,15 @@ export function SourceCitation({ citation, index, compact = false }: SourceCitat
     }
     return null;
   };
+  const freshnessColor = (() => {
+    const date = new Date(citation.last_updated);
+    const now = new Date();
+    const daysDiff = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
 
+    if (daysDiff < 7) return 'text-green-600';
+    if (daysDiff < 30) return 'text-yellow-600';
+    return 'text-gray-500';
+  })();
 
 
   const getRelevanceLabel = () => {

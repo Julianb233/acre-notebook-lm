@@ -67,8 +67,8 @@ export function DocumentList({
           <div className="flex items-center gap-4 flex-1">
             <Checkbox
               checked={isAllSelected}
-              {/* @ts-expect-error - Table types mismatch from shadcn */}
-              indeterminate={isSomeSelected}
+              // @ts-expect-error - Table types mismatch from shadcn
+              indeterminate={isSomeSelected ? "true" : "false"}
               onCheckedChange={toggleSelectAll}
             />
             <span className="text-sm font-medium text-gray-500 w-[40%]">Name</span>
