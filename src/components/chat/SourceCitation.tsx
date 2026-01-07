@@ -61,15 +61,7 @@ export function SourceCitation({ citation, index, compact = false }: SourceCitat
     return null;
   };
 
-  const getFreshnessColor = () => {
-    if (!citation.last_updated) return 'text-gray-400';
-    const daysSinceUpdate = Math.floor(
-      (Date.now() - new Date(citation.last_updated).getTime()) / (1000 * 60 * 60 * 24)
-    );
-    if (daysSinceUpdate <= 1) return 'text-green-500';
-    if (daysSinceUpdate <= 7) return 'text-yellow-500';
-    return 'text-red-500';
-  };
+
 
   const getRelevanceLabel = () => {
     if (citation.relevance_score >= 0.9) return 'High match';
@@ -100,7 +92,7 @@ export function SourceCitation({ citation, index, compact = false }: SourceCitat
               )}
               <p className="text-xs text-muted-foreground line-clamp-3">{citation.excerpt}</p>
               <div className="flex items-center justify-between text-xs">
-                <span className={getFreshnessColor()}>
+                <span className={freshnessColor}>
                   <Clock className="h-3 w-3 inline mr-1" />
                   {formatRelativeTime(citation.last_updated)}
                 </span>
@@ -148,7 +140,7 @@ export function SourceCitation({ citation, index, compact = false }: SourceCitat
 
       <div className="mt-2 flex items-center justify-between text-xs">
         <div className="flex items-center gap-1">
-          <Clock className={`h-3 w-3 ${getFreshnessColor()}`} />
+          <div className={`h-2 w-2 rounded-full ${freshnessColor}`} />
           <span className="opacity-75">{formatRelativeTime(citation.last_updated)}</span>
         </div>
         <Badge variant="outline" className="text-xs">

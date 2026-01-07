@@ -149,6 +149,7 @@ export interface AirtableRecord {
   record_id: string;
   data: Record<string, unknown>;
   synced_at: string;
+  synced_at_formatted?: string;
 }
 
 export interface AirtableConfig {
@@ -306,6 +307,7 @@ export interface ReportSubsection {
   id: string;
   title: string;
   content: string;
+  // subsections?: ReportSubsection[]; // Recursive support if needed
 }
 
 export interface ReportSection {
@@ -354,3 +356,4 @@ export interface TableOfContentsItem {
   level: number;
   page?: number;
 }
+

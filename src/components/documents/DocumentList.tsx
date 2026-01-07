@@ -67,7 +67,7 @@ export function DocumentList({
           <div className="flex items-center gap-4 flex-1">
             <Checkbox
               checked={isAllSelected}
-              // @ts-ignore - indeterminate is valid but not in types
+              {/* @ts-expect-error - Table types mismatch from shadcn */}
               indeterminate={isSomeSelected}
               onCheckedChange={toggleSelectAll}
             />

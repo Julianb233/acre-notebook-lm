@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Search, Settings, User, ChevronDown, LayoutDashboard, Building2 } from 'lucide-react';
+import { Bell, Search, Settings, User, ChevronDown, LayoutDashboard, Building2, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,22 +17,28 @@ import { Switch } from '@/components/ui/switch';
 interface HeaderProps {
   isAdminView: boolean;
   onToggleView: () => void;
+  onMobileMenuToggle: () => void;
 }
 
-export function Header({ isAdminView, onToggleView }: HeaderProps) {
+export function Header({ isAdminView, onToggleView, onMobileMenuToggle }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="flex h-16 items-center px-6 gap-4">
+      <div className="flex h-16 items-center px-4 md:px-6 gap-4">
+        {/* Mobile Menu Toggle */}
+        <Button variant="ghost" size="icon" className="md:hidden -ml-2 text-gray-600" onClick={onMobileMenuToggle}>
+          <Menu className="h-6 w-6" />
+        </Button>
+
         {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
             <span className="text-white font-bold text-sm">A</span>
           </div>
-          <span className="font-semibold text-lg text-gray-900">ACRE Notebook</span>
+          <span className="font-semibold text-lg text-gray-900 hidden sm:block">ACRE Notebook</span>
         </div>
 
-        {/* View Toggle */}
-        <div className="flex items-center gap-2 ml-8 px-3 py-1.5 bg-gray-100 rounded-full">
+        {/* View Toggle - Hidden on mobile, moved to menu potentially later, strict requirement focus first */}
+        <div className="hidden md:flex items-center gap-2 ml-8 px-3 py-1.5 bg-gray-100 rounded-full">
           <LayoutDashboard className={`w-4 h-4 ${!isAdminView ? 'text-blue-600' : 'text-gray-400'}`} />
           <Switch
             checked={isAdminView}
@@ -46,19 +52,23 @@ export function Header({ isAdminView, onToggleView }: HeaderProps) {
         </div>
 
         {/* Search */}
-        <div className="flex-1 max-w-md mx-auto">
+        <div className="flex-1 max-w-md mx-auto hidden md:block">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               type="search"
-              placeholder="Search documents, conversations..."
+              placeholder="Search..."
               className="w-full pl-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 ml-auto">
+          <Button variant="ghost" size="icon" className="md:hidden">
+            <Search className="h-5 w-5 text-gray-600" />
+          </Button>
+
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5 text-gray-600" />
@@ -68,14 +78,14 @@ export function Header({ isAdminView, onToggleView }: HeaderProps) {
           </Button>
 
           {/* Settings */}
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="hidden sm:flex">
             <Settings className="h-5 w-5 text-gray-600" />
           </Button>
 
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2 px-2">
+              <Button variant="ghost" className="flex items-center gap-2 px-2 hover:bg-transparent md:hover:bg-accent">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
                   <User className="h-4 w-4 text-white" />
                 </div>
@@ -83,7 +93,7 @@ export function Header({ isAdminView, onToggleView }: HeaderProps) {
                   <p className="text-sm font-medium text-gray-900">ACRE Partner</p>
                   <p className="text-xs text-gray-500">partner@acre.com</p>
                 </div>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
+                <ChevronDown className="h-4 w-4 text-gray-400 hidden md:block" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

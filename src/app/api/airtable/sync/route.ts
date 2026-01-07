@@ -106,8 +106,27 @@ async function syncTableToSupabase(
 ): Promise<{ synced: number; errors: string[] }> {
   const result = { synced: 0, errors: [] as string[] };
 
+  // Import embedding generator dynamically to avoid build issues if env vars missing during static analysis
+  const { generateEmbedding } = await import('@/lib/ai/embeddings');
+
   for (const record of records) {
     try {
+      // Create a text representation of the record for embedding
+      // We join all field values into a single string
+      const content = Object.entries(record.fields)
+        .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+        .join('\n');
+
+      let embedding: number[] | null = null;
+      try {
+        if (content.trim()) {
+          embedding = await generateEmbedding(content);
+        }
+      } catch (embError) {
+        console.warn(`Failed to generate embedding for record ${record.id}:`, embError);
+        // Continue without embedding rather than failing the whole sync
+      }
+
       const recordData = {
         external_id: record.id,
         source: 'airtable',
@@ -115,6 +134,7 @@ async function syncTableToSupabase(
         table_id: table.id,
         table_name: table.name,
         fields: record.fields,
+        embedding: embedding, // Add the embedding
         created_at_source: record.createdTime,
         synced_at: new Date().toISOString(),
       };
