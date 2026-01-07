@@ -29,7 +29,7 @@ interface SidebarProps {
 }
 
 const clientNavItems = [
-  { href: '/', icon: LayoutGrid, label: 'Notebook' },
+  { href: '/partners/1', icon: LayoutGrid, label: 'My Notebook' }, // Direct link to the Notebook interface
   { href: '/documents', icon: FolderOpen, label: 'Sources' },
   { href: '/chat', icon: MessageSquare, label: 'Chat' },
   { href: '/generate', icon: Sparkles, label: 'Generate' },
